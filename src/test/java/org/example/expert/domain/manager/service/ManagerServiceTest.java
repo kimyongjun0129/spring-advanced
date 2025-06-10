@@ -22,6 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 import java.util.Optional;
 
+import static org.example.expert.domain.user.enums.UserRole.USER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -39,20 +40,26 @@ class ManagerServiceTest {
     private ManagerService managerService;
 
     @Test
-    public void manager_목록_조회_시_Todo가_없다면_NPE_에러를_던진다() {
+    public void manager_목록_조회_시_Todo가_없다면_InvalidRequestException_에러를_던진다() {
         // given
+        User user = new User("naD13@naver.com", "1234", USER);
+        userRepository.save(user);
+
         long todoId = 1L;
+        Todo todo = new Todo("제목", "내용", "맑음", user);
+        todoRepository.save(todo);
+
         given(todoRepository.findById(todoId)).willReturn(Optional.empty());
 
         // when & then
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> managerService.getManagers(todoId));
-        assertEquals("Manager not found", exception.getMessage());
+        assertEquals("Todo not found", exception.getMessage());
     }
 
     @Test
     void todo의_user가_null인_경우_예외가_발생한다() {
         // given
-        AuthUser authUser = new AuthUser(1L, "a@a.com", UserRole.USER);
+        AuthUser authUser = new AuthUser(1L, "a@a.com", USER);
         long todoId = 1L;
         long managerUserId = 2L;
 
@@ -75,7 +82,7 @@ class ManagerServiceTest {
     public void manager_목록_조회에_성공한다() {
         // given
         long todoId = 1L;
-        User user = new User("user1@example.com", "password", UserRole.USER);
+        User user = new User("user1@example.com", "password", USER);
         Todo todo = new Todo("Title", "Contents", "Sunny", user);
         ReflectionTestUtils.setField(todo, "id", todoId);
 
@@ -97,14 +104,14 @@ class ManagerServiceTest {
     @Test // 테스트코드 샘플
     void todo가_정상적으로_등록된다() {
         // given
-        AuthUser authUser = new AuthUser(1L, "a@a.com", UserRole.USER);
+        AuthUser authUser = new AuthUser(1L, "a@a.com", USER);
         User user = User.fromAuthUser(authUser);  // 일정을 만든 유저
 
         long todoId = 1L;
         Todo todo = new Todo("Test Title", "Test Contents", "Sunny", user);
 
         long managerUserId = 2L;
-        User managerUser = new User("b@b.com", "password", UserRole.USER);  // 매니저로 등록할 유저
+        User managerUser = new User("b@b.com", "password", USER);  // 매니저로 등록할 유저
         ReflectionTestUtils.setField(managerUser, "id", managerUserId);
 
         ManagerSaveRequest managerSaveRequest = new ManagerSaveRequest(managerUserId); // request dto 생성
