@@ -1,6 +1,8 @@
 package org.example.expert.domain.comment.service;
 
+import org.example.expert.TestConst;
 import org.example.expert.domain.comment.dto.request.CommentSaveRequest;
+import org.example.expert.domain.comment.dto.response.CommentResponse;
 import org.example.expert.domain.comment.dto.response.CommentSaveResponse;
 import org.example.expert.domain.comment.entity.Comment;
 import org.example.expert.domain.comment.repository.CommentRepository;
@@ -17,6 +19,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,7 +42,6 @@ class CommentServiceTest {
     public void comment_등록_중_할일을_찾지_못해_에러가_발생한다() {
         // given
         long todoId = 1;
-        Todo todo = new Todo();
         CommentSaveRequest request = new CommentSaveRequest("contents");
         AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
 
@@ -71,5 +74,38 @@ class CommentServiceTest {
 
         // then
         assertNotNull(result);
+    }
+
+    @Test
+    public void comments_조회시_comments가_1개도_없는경우() {
+        // given
+        long todoId = 1L;
+        List<Comment> commentList = List.of();
+
+        given(commentRepository.findByTodoIdWithUser(todoId)).willReturn(commentList);
+
+        // when
+        List<CommentResponse> response = commentService.getComments(todoId);
+
+        // then
+        assertNotNull(response);
+        assertEquals(0, response.size());
+    }
+
+    @Test
+    public void comments를_정상적으로_조회한다() {
+        // given
+        long todoId = 1L;
+        List<Comment> commentList = new ArrayList<>();
+        commentList.add(TestConst.COMMENT);
+
+        given(commentRepository.findByTodoIdWithUser(todoId)).willReturn(commentList);
+
+        // when
+        List<CommentResponse> response = commentService.getComments(todoId);
+
+        // then
+        assertNotNull(response);
+        assertEquals(commentList.size(), response.size());
     }
 }
